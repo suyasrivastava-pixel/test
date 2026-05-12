@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Business Review - Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header .meta {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .metric-card .label {
+            font-size: 14px;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .metric-card .value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .metric-card .change {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .metric-card .change.positive {
+            color: #48bb78;
+        }
+
+        .metric-card .change.negative {
+            color: #f56565;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-container h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .table-container {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.success {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-badge.warning {
+            background: #feebc8;
+            color: #744210;
+        }
+
+        .status-badge.error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        canvas {
+            max-height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Weekly Business Review</h1>
+            <div class="meta">
+                Week of May 5-11, 2026 | Analytics Team | Generated: <span id="timestamp"></span>
+            </div>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="label">Total Revenue</div>
+                <div class="value">$1.24M</div>
+                <div class="change positive">↑ 12.5% vs LW</div>
+            </div>
+            <div class="metric-card">
+                <div class="label">Active Users</div>
+                <div class="value">45.2K</div>
+                <div class="change positive">↑ 8.3% vs LW</div>
+            </div>
+            <div class="metric-card">
+                <div class="label">Conversion Rate</div>
+                <div class="value">3.42%</div>
+                <div class="change negative">↓ 0.5% vs LW</div>
+            </div>
+            <div class="metric-card">
+                <div class="label">Avg Order Value</div>
+                <div class="value">$87.65</div>
+                <div class="change positive">↑ 4.2% vs LW</div>
+            </div>
+        </div>
+
+        <div class="charts-row">
+            <div class="chart-container">
+                <h2>Weekly Revenue Trend</h2>
+                <canvas id="revenueChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Category Performance</h2>
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+
+        <div class="charts-row">
+            <div class="chart-container">
+                <h2>User Engagement</h2>
+                <canvas id="engagementChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h2>Traffic Sources</h2>
+                <canvas id="trafficChart"></canvas>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <h2 style="margin-bottom: 15px; color: #2d3748;">Top Performing Products</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product ID</th>
+                        <th>Product Name</th>
+                        <th>Revenue</th>
+                        <th>Units Sold</th>
+                        <th>Growth</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="productTable">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Set timestamp
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+
+        // Revenue Chart
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Revenue ($K)',
+                    data: [165, 178, 192, 185, 201, 188, 195],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Category Chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(categoryCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Electronics', 'Fashion', 'Home', 'Sports', 'Books'],
+                datasets: [{
+                    label: 'Revenue ($K)',
+                    data: [425, 380, 295, 210, 165],
+                    backgroundColor: [
+                        '#667eea',
+                        '#764ba2',
+                        '#48bb78',
+                        '#ed8936',
+                        '#4299e1'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Engagement Chart
+        const engagementCtx = document.getElementById('engagementChart').getContext('2d');
+        new Chart(engagementCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [
+                    {
+                        label: 'Page Views',
+                        data: [12500, 13200, 14100, 13800, 15200, 14500, 14800],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Sessions',
+                        data: [8200, 8900, 9400, 9100, 10200, 9600, 9900],
+                        borderColor: '#48bb78',
+                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Traffic Chart
+        const trafficCtx = document.getElementById('trafficChart').getContext('2d');
+        new Chart(trafficCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Organic', 'Paid', 'Direct', 'Social', 'Referral'],
+                datasets: [{
+                    data: [35, 25, 20, 12, 8],
+                    backgroundColor: [
+                        '#667eea',
+                        '#764ba2',
+                        '#48bb78',
+                        '#ed8936',
+                        '#4299e1'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true
+            }
+        });
+
+        // Generate product table
+        const products = [
+            { id: 'PRD-1024', name: 'Wireless Headphones Pro', revenue: '$45,230', units: 516, growth: 15.2, status: 'success' },
+            { id: 'PRD-2156', name: 'Smart Watch Series 5', revenue: '$38,940', units: 423, growth: 12.8, status: 'success' },
+            { id: 'PRD-3421', name: 'Running Shoes Elite', revenue: '$32,150', units: 387, growth: 8.5, status: 'success' },
+            { id: 'PRD-4892', name: 'Coffee Maker Deluxe', revenue: '$28,670', units: 312, growth: 5.2, status: 'warning' },
+            { id: 'PRD-5234', name: 'Gaming Mouse RGB', revenue: '$24,890', units: 289, growth: -2.1, status: 'error' },
+            { id: 'PRD-6745', name: 'Yoga Mat Premium', revenue: '$22,340', units: 267, growth: 6.7, status: 'success' },
+            { id: 'PRD-7821', name: 'Desk Lamp LED', revenue: '$19,450', units: 234, growth: 3.4, status: 'warning' },
+            { id: 'PRD-8932', name: 'Water Bottle Steel', revenue: '$17,680', units: 221, growth: 9.1, status: 'success' }
+        ];
+
+        const tableBody = document.getElementById('productTable');
+        products.forEach(product => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><strong>${product.id}</strong></td>
+                <td>${product.name}</td>
+                <td><strong>${product.revenue}</strong></td>
+                <td>${product.units}</td>
+                <td style="color: ${product.growth > 0 ? '#48bb78' : '#f56565'}">${product.growth > 0 ? '↑' : '↓'} ${Math.abs(product.growth)}%</td>
+                <td><span class="status-badge ${product.status}">${product.status}</span></td>
+            `;
+            tableBody.appendChild(row);
+        });
+    </script>
+</body>
+</html>
